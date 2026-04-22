@@ -496,6 +496,17 @@
       white-space: pre-wrap;
     }
 
+    .reader-text-title {
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--blue-deep);
+      border-bottom: 1px solid rgba(61, 174, 233, 0.18);
+    }
+
     .reader-editor {
       margin-top: 14px;
       display: grid;
@@ -957,6 +968,7 @@
         <button class="tab-button" data-view="stats" type="button">Stats</button>
         <button class="tab-button is-active" data-view="home" type="button">Flashcards</button>
         <button class="tab-button" data-view="texto" type="button">Texto</button>
+        <button class="tab-button" data-view="leitura" type="button">Leitura</button>
         <button class="tab-button" data-view="importFlashcard" type="button">Import Flashcard</button>
         <button class="tab-button" data-view="importTexto" type="button">Import Texto</button>
         <button class="tab-button" data-view="study" id="studyTabButton" type="button" disabled hidden>Study</button>
@@ -2176,6 +2188,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
           textId: '',
           title: '',
           text: '',
+          currentText: '',
           annotationMode: 'word',
           selectedType: 'word',
           selectedText: '',
@@ -2205,6 +2218,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
         textId: typeof data.textId === 'string' ? data.textId : '',
         title: typeof data.title === 'string' ? data.title : '',
         text: getTextEntrySourceText(data, true),
+        currentText: getTextEntrySourceText(data, true),
         annotationMode,
         selectedType,
         selectedText,
@@ -2324,6 +2338,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
       const text = getTextEntrySourceText(state.reader, true);
       entry.title = state.reader.title || entry.title;
       entry.text = text;
+      entry.currentText = text;
       entry.content = text;
       entry.body = text;
       entry.rawText = text;
@@ -2845,6 +2860,11 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
     }
 
     function getCurrentReaderText() {
+      const currentText = getTextEntrySourceText({ text: state.reader.currentText }, true);
+      if (currentText) {
+        return currentText;
+      }
+
       const directText = getTextEntrySourceText(state.reader, true);
       if (directText) {
         return directText;
@@ -2891,6 +2911,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
       if (!state.reader.text && text) {
         state.reader.text = text;
       }
+      state.reader.currentText = text;
 
       els.readerSubtitle.textContent = isPhraseMode
         ? `${state.reader.title ? `${state.reader.title} • ` : ''}${formatNumber(phraseCount)} frases detectadas no texto atual.`
@@ -2919,6 +2940,10 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
         const hasNote = Boolean(getReadingNote('word', normalized));
         return `<button type="button" class="reader-word${isSelected ? ' is-selected' : ''}" data-reader-word="${escapeHtml(token.value)}" data-word-key="${escapeHtml(normalized)}" aria-label="Selecionar ${escapeHtml(token.value)}">${escapeHtml(token.value)}${hasNote ? '<sup title="Possui nota">•</sup>' : ''}</button>`;
       }).join('');
+
+      if (state.reader.title) {
+        els.readerText.insertAdjacentHTML('afterbegin', `<div class="reader-text-title">${escapeHtml(state.reader.title)}</div>`);
+      }
 
       els.readerSelected.textContent = state.reader.selectedText
         ? `Selecionada: ${state.reader.selectedText}`
@@ -2975,42 +3000,6 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
         `;
       }).join('');
 
-      els.textsList.querySelectorAll('[data-text-id]').forEach(card => {
-        card.addEventListener('click', () => {
-          openTextEntry(card.dataset.textId);
-        });
-
-        card.addEventListener('keydown', event => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            openTextEntry(card.dataset.textId);
-          }
-        });
-      });
-
-      els.textsList.querySelectorAll('[data-open-text]').forEach(button => {
-        button.addEventListener('click', event => {
-          event.preventDefault();
-          event.stopPropagation();
-          openTextEntry(button.dataset.openText);
-        });
-      });
-
-      els.textsList.querySelectorAll('[data-rename-text]').forEach(button => {
-        button.addEventListener('click', event => {
-          event.preventDefault();
-          event.stopPropagation();
-          renameTextEntry(button.dataset.renameText);
-        });
-      });
-
-      els.textsList.querySelectorAll('[data-delete-text]').forEach(button => {
-        button.addEventListener('click', event => {
-          event.preventDefault();
-          event.stopPropagation();
-          deleteTextEntry(button.dataset.deleteText);
-        });
-      });
     }
 
     function setReaderMode(mode) {
@@ -3037,6 +3026,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
       state.reader.textId = entry.id;
       state.reader.title = entry.title;
       state.reader.text = text;
+      state.reader.currentText = text;
       state.reader.annotationMode = entry.annotationMode || 'word';
       state.reader.selectedType = state.reader.annotationMode;
       state.reader.selectedText = '';
@@ -3071,6 +3061,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
         state.reader.textId = '';
         state.reader.title = '';
         state.reader.text = '';
+        state.reader.currentText = '';
         state.reader.notes = [];
         state.reader.selectedText = '';
         state.reader.selectedKey = '';
@@ -3254,6 +3245,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
       state.reader.textId = entry.id;
       state.reader.title = entry.title;
       state.reader.text = entry.text;
+      state.reader.currentText = entry.text;
       state.reader.annotationMode = entry.annotationMode;
       state.reader.selectedType = entry.annotationMode;
       state.reader.selectedText = '';
@@ -3266,10 +3258,8 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
       state.reader.notes = [];
       saveTextLibrary();
       saveReaderData();
-      renderTextsList();
-      renderReading();
-      setView('texto');
-      showNotice('textImportNotice', 'Texto salvo na aba Texto.', false);
+      openTextEntry(entry.id);
+      showNotice('textImportNotice', 'Texto salvo e aberto para leitura.', false);
     }
 
     function importLegacyReaderAsTextIfNeeded() {
@@ -3681,6 +3671,14 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
         return;
       }
 
+      if (view === 'leitura' && !getCurrentReaderText().trim() && state.texts.length) {
+        const fallbackEntry = getActiveTextEntry() || state.texts[0];
+        if (fallbackEntry) {
+          openTextEntry(fallbackEntry.id);
+          return;
+        }
+      }
+
       state.view = view;
       document.querySelectorAll('.tab-button').forEach(button => {
         button.classList.toggle('is-active', button.dataset.view === view);
@@ -3720,6 +3718,48 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
     function wireEvents() {
       document.querySelectorAll('.tab-button').forEach(button => {
         button.addEventListener('click', () => setView(button.dataset.view));
+      });
+
+      els.textsList.addEventListener('click', event => {
+        const openButton = event.target.closest('[data-open-text]');
+        if (openButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          openTextEntry(openButton.dataset.openText);
+          return;
+        }
+
+        const renameButton = event.target.closest('[data-rename-text]');
+        if (renameButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          renameTextEntry(renameButton.dataset.renameText);
+          return;
+        }
+
+        const deleteButton = event.target.closest('[data-delete-text]');
+        if (deleteButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          deleteTextEntry(deleteButton.dataset.deleteText);
+          return;
+        }
+
+        const card = event.target.closest('[data-text-id]');
+        if (card && els.textsList.contains(card)) {
+          openTextEntry(card.dataset.textId);
+        }
+      });
+
+      els.textsList.addEventListener('keydown', event => {
+        const card = event.target.closest('[data-text-id]');
+        if (!card) {
+          return;
+        }
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openTextEntry(card.dataset.textId);
+        }
       });
 
       els.studyAllButton.addEventListener('click', () => {
