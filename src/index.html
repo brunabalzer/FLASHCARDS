@@ -2071,6 +2071,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
         textId: '',
         title: '',
         text: '',
+        currentText: '',
         annotationMode: 'word',
         selectedType: 'word',
         selectedText: '',
@@ -2887,10 +2888,13 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
       const wordCount = tokenizeReaderText(text).filter(token => token.type === 'word').length;
       const phraseCount = tokenizeReaderPhrases(text).length;
       const noteCount = state.reader.notes.length;
-
-      els.readerWordsCount.textContent = isPhraseMode
+      const readingCountText = isPhraseMode
         ? `${formatNumber(phraseCount)} frases`
         : `${formatNumber(wordCount)} palavras`;
+
+      if (els.readerWordsCount) {
+        els.readerWordsCount.textContent = readingCountText;
+      }
       els.readerNotesCount.textContent = `${formatNumber(noteCount)} notas`;
       els.readerWordModeButton.classList.toggle('is-active', !isPhraseMode);
       els.readerPhraseModeButton.classList.toggle('is-active', isPhraseMode);
@@ -3366,6 +3370,7 @@ J'aime lire des textes simples en français pour apprendre le vocabulaire.`;
         textId: '',
         title: '',
         text: '',
+        currentText: '',
         annotationMode: 'word',
         selectedType: 'word',
         selectedText: '',
